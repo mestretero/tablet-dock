@@ -1,0 +1,36 @@
+[
+  {
+    "id": "notepad",
+    "name": "Notepad",
+    "icon": "N",
+    "path": "notepad.exe"
+  },
+  {
+    "id": "calc",
+    "name": "Calculator",
+    "icon": "=",
+    "path": "calc.exe"
+  },
+  {
+    "id": "chrome",
+    "name": "Chrome",
+    "icon": "C",
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "args": ["--new-window", "https://youtube.com"]
+  },
+  {
+    "id": "obs",
+    "name": "OBS Studio",
+    "icon": "OBS",
+    "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\OBS Studio.lnk",
+    "process": "obs64.exe",
+    "icon_from": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe"
+  },
+  {
+    "id": "projects",
+    "name": "Projects",
+    "icon": "P",
+    "path": "C:\\Projects",
+    "project_root": true
+  }
+]

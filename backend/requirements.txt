@@ -1,0 +1,18 @@
+# Faz 1 - LAN dock ajanı (Windows PC)
+fastapi
+uvicorn[standard]
+psutil          # CPU / RAM durumu
+pycaw           # ses seviyesi (absolute slider + mute)
+comtypes        # pycaw bağımlılığı (COM)
+pystray         # sistem tepsisi ikonu (penceresiz başlat/durdur)
+Pillow          # ikon + tepsi görseli (PWA ikonları da)
+pyperclip       # pano geçmişi (oku/yaz)
+icoextract      # uygulama ikonlarını exe'den çıkar
+
+# Opsiyonel - "şu an çalan şarkı" için. Kurulu değilse o kart gizlenir.
+# pip install winsdk
+
+# --- Faz 2: sesli asistan ---
+faster-whisper  # ses → yazı (yerel, GPU)
+# Beyin (Gemma) ayrı kurulur: ollama + `ollama pull gemma4:e2b-it-qat`
+# Claude yedeği: PC'de `claude` CLI kurulu olmalı.

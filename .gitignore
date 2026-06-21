@@ -1,0 +1,18 @@
+# --- Gizli / kişisel (private / personal) ---
+# self-signed sertifika + ÖZEL ANAHTAR
+backend/certs/
+# kişisel program yolları (apps.example.json'dan kopyalanır)
+backend/apps.json
+# üretilmiş ikonlar + telifli oyun kapakları
+backend/.icon-cache/
+# sunucu logu (IP'ler + ses transkriptleri)
+deploy/dock.log
+
+# --- Üretilmiş / araç (generated / tooling) ---
+__pycache__/
+*.pyc
+.claude/
+
+# --- OS ---
+Thumbs.db
+.DS_Store
