@@ -21,7 +21,7 @@ This is great for **old/weak tablets** because the tablet does almost nothing �
 - 🚀 **Apps** — tap to open a program (with its real icon). Tap again to close it. Open apps glow.
 - 🎮 **Games** — finds your **Steam & Epic** games automatically and shows their cover art. Tap to play. Updates itself when you install/uninstall games.
 - 📁 **Projects** — shows the folders inside your project folders; tap to open one in Explorer. Newest on top.
-- 🎵 **Media & sound** — play/pause/next, volume, the song that's playing, and a button to switch your speaker/headphones.
+- 🎵 **Media & sound** — play/pause/next, master volume, a **per‑app volume mixer** (set game / Discord / browser independently), the song that's playing, and a button to switch your speaker/headphones.
 - 📋 **Clipboard** — your last few copied texts; tap one to copy it back to the PC. (Passwords from password managers are skipped.)
 - 🎙️ **Voice assistant** — tap and talk. *“Ask”* gives a fast answer from a local AI on your PC. *“Search the web”* uses Claude with live internet. It speaks the answer out loud. You can also say commands like “open OBS” or “turn the volume down”.
 - 🎨 Clean **Apple‑style dark design** with a floating bottom menu; installs on the tablet like a real app (fullscreen).
@@ -138,7 +138,14 @@ Then on the tablet, the **Assistant** tab works: tap **Ask** (local & fast) or *
 
 ## ⚙️ Make it yours
 
-Edit **`backend/apps.json`** any time (it's re‑read automatically — no restart):
+**The easy way — add or remove programs without editing any file:**
+
+- **Add:** right‑click any program or shortcut in Explorer → **Send to → Tablet Dock'a Ekle**, or open the tray icon → **Program Ekle…**. Pick the file and confirm the name — its icon is pulled in automatically.
+- **Remove:** tray icon → **Program Kaldır…**, then pick it from the list (this only removes it from the panel; it does **not** uninstall the program).
+
+New programs show up on the tablet within a few seconds — no restart needed.
+
+**Advanced — edit `backend/apps.json` directly** (it's re‑read automatically — no restart):
 
 ```jsonc
 {

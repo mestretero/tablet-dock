@@ -19,9 +19,14 @@ BASE = Path(__file__).resolve().parent.parent
 BACKEND = BASE / "backend"
 ICON_FILE = BASE / "frontend" / "icon-512.png"
 LOG_FILE = BASE / "deploy" / "dock.log"
+ADD_SCRIPT = BASE / "deploy" / "add_to_dock.pyw"
 PANEL_URL = "https://localhost:8000"
 
 CREATE_NO_WINDOW = 0x08000000   # alt process'in konsol penceresi açmasını engelle
+
+# 'Program Ekle' aracını konsolsuz çalıştırmak için pythonw (yoksa mevcut yorumlayıcı).
+_pyw = Path(sys.executable).with_name("pythonw.exe")
+PYTHONW = str(_pyw) if _pyw.exists() else sys.executable
 
 _proc = None
 _icon = None       # tepsi ikonu referansı (durum güncellemek için)
@@ -77,6 +82,28 @@ def open_panel(icon=None, item=None):
     webbrowser.open(PANEL_URL)
 
 
+def add_program(icon=None, item=None):
+    """'Dock'a Ekle' aracını aç (dosya seç -> apps.json'a ekle, logo otomatik)."""
+    subprocess.Popen([PYTHONW, str(ADD_SCRIPT)], creationflags=CREATE_NO_WINDOW)
+
+
+def remove_program(icon=None, item=None):
+    """'Program Kaldır' penceresini aç (listeden seç -> panelden çıkar)."""
+    subprocess.Popen([PYTHONW, str(ADD_SCRIPT), "--remove"], creationflags=CREATE_NO_WINDOW)
+
+
+def _ensure_sendto():
+    """İlk açılışta sağ-tık 'Gönder -> Tablet Dock'a Ekle' kısayolunu sessizce kur."""
+    try:
+        import win32com.client
+        sendto = Path(win32com.client.Dispatch("WScript.Shell").SpecialFolders("SendTo"))
+        if not (sendto / "Tablet Dock'a Ekle.lnk").exists():
+            subprocess.Popen([PYTHONW, str(ADD_SCRIPT), "--install-sendto", "--silent"],
+                             creationflags=CREATE_NO_WINDOW)
+    except Exception:
+        pass   # pywin32 yoksa / erişilemezse sessiz geç (tepsi menüsü yine çalışır)
+
+
 def quit_app(icon, item):
     stop()
     icon.stop()
@@ -107,10 +134,13 @@ def main():
         pystray.MenuItem("Başlat", start, enabled=lambda i: not _running()),
         pystray.MenuItem("Durdur", stop, enabled=lambda i: _running()),
         pystray.MenuItem("Paneli aç", open_panel),
+        pystray.MenuItem("Program Ekle…", add_program),
+        pystray.MenuItem("Program Kaldır…", remove_program),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Çıkış", quit_app),
     )
     _icon = pystray.Icon("dock", _img_on, "Tablet Dock", menu)
+    _ensure_sendto()   # sağ-tık 'Gönder' kısayolunu kur (bir kez)
     start()            # açılışta sunucuyu başlat
     _icon.run()        # tepsi döngüsü (bloklar)
 

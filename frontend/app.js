@@ -33,47 +33,54 @@ function pixelShift() {
 }
 
 // --- Başlatıcı --------------------------------------------------------------
+let _appsSig = "";
 async function loadApps() {
   const box = $("#apps");
-  try {
-    const apps = await api("/apps");
-    if (!apps.length) {
-      box.innerHTML = '<div class="apps-empty">apps.json boş — program ekleyin.</div>';
-      return;
+  let apps;
+  try { apps = await api("/apps"); }
+  catch {                              // ajan kapalı -> mevcut listeyi koru
+    if (!box.querySelector(".app-tile")) {
+      box.innerHTML = '<div class="apps-empty">Ajana bağlanılamadı.</div>';
     }
-    box.innerHTML = "";
-    for (const app of apps) {
-      const tile = document.createElement("button");
-      tile.className = "app-tile";
-      tile.dataset.appId = app.id;
+    return;
+  }
+  const sig = apps.map((a) => a.id).join(",");
+  if (sig === _appsSig && box.querySelector(".app-tile")) return;  // değişmediyse çizme
+  _appsSig = sig;
+  if (!apps.length) {
+    box.innerHTML = '<div class="apps-empty">apps.json boş — program ekleyin.</div>';
+    return;
+  }
+  box.innerHTML = "";
+  for (const app of apps) {
+    const tile = document.createElement("button");
+    tile.className = "app-tile";
+    tile.dataset.appId = app.id;
 
-      let icon;
-      if (app.img) {
-        icon = document.createElement("img");
-        icon.className = "app-img";
-        icon.src = "/api/app-icon/" + app.id;
-        icon.alt = "";
-        icon.onerror = () => {              // ikon çıkarılamazsa harf monogramına düş
-          const span = document.createElement("span");
-          span.className = "app-icon";
-          span.textContent = app.icon;
-          icon.replaceWith(span);
-        };
-      } else {
-        icon = document.createElement("span");
-        icon.className = "app-icon";
-        icon.textContent = app.icon;
-      }
-      const name = document.createElement("span");
-      name.className = "app-name";
-      name.textContent = app.name;
-
-      tile.append(icon, name);
-      tile.addEventListener("click", () => launchApp(app.id, tile));
-      box.appendChild(tile);
+    let icon;
+    if (app.img) {
+      icon = document.createElement("img");
+      icon.className = "app-img";
+      icon.src = "/api/app-icon/" + app.id;
+      icon.alt = "";
+      icon.onerror = () => {              // ikon çıkarılamazsa harf monogramına düş
+        const span = document.createElement("span");
+        span.className = "app-icon";
+        span.textContent = app.icon;
+        icon.replaceWith(span);
+      };
+    } else {
+      icon = document.createElement("span");
+      icon.className = "app-icon";
+      icon.textContent = app.icon;
     }
-  } catch {
-    box.innerHTML = '<div class="apps-empty">Ajana bağlanılamadı.</div>';
+    const name = document.createElement("span");
+    name.className = "app-name";
+    name.textContent = app.name;
+
+    tile.append(icon, name);
+    tile.addEventListener("click", () => launchApp(app.id, tile));
+    box.appendChild(tile);
   }
 }
 
@@ -249,6 +256,72 @@ async function setAudio(key) {
   loadAudio();   // aktif vurguyu hemen güncelle
 }
 
+// --- Uygulama-bazlı ses mikseri ---------------------------------------------
+let mixerActiveKey = null;   // şu an sürüklenen kaydırağın anahtarı (clobber'ı önler)
+
+async function loadMixer() {
+  let data;
+  try { data = await api("/mixer"); } catch { return; }
+  renderMixer(data.sessions);
+}
+
+function renderMixer(sessions) {
+  const box = $("#mixer");
+  const seen = new Set();
+  for (const s of sessions) {
+    seen.add(s.key);
+    let row = box.querySelector(`.mx-row[data-key="${CSS.escape(s.key)}"]`);
+    if (!row) row = createMixerRow(s, box);
+    row.querySelector(".mx-label").textContent = s.label;
+    row.querySelector(".mx-mute").classList.toggle("muted", s.muted);
+    if (mixerActiveKey !== s.key) {        // sürüklenen satırı ezme
+      row.querySelector(".mx-slider").value = s.level;
+      row.querySelector(".mx-val").textContent = s.level;
+    }
+  }
+  box.querySelectorAll(".mx-row").forEach((r) => {   // kapanan uygulamaları kaldır
+    if (!seen.has(r.dataset.key)) r.remove();
+  });
+  if (!box.querySelector(".mx-row")) {
+    box.innerHTML = '<div class="mx-empty">Ses çalan uygulama yok.</div>';
+  }
+}
+
+function createMixerRow(s, box) {
+  const empty = box.querySelector(".mx-empty");
+  if (empty) empty.remove();
+  const row = document.createElement("div");
+  row.className = "mx-row";
+  row.dataset.key = s.key;
+  row.innerHTML =
+    '<button class="mx-mute mbtn mbtn-sm" aria-label="Sustur">' +
+    '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/></svg></button>' +
+    '<div class="mx-info"><span class="mx-label"></span>' +
+    `<input class="mx-slider slider" type="range" min="0" max="100" value="${s.level}"></div>` +
+    `<span class="mx-val">${s.level}</span>`;
+
+  const slider = row.querySelector(".mx-slider");
+  let t = null;
+  slider.addEventListener("input", () => {
+    mixerActiveKey = s.key;
+    row.querySelector(".mx-val").textContent = slider.value;
+    clearTimeout(t);
+    t = setTimeout(() => api("/mixer", { key: s.key, level: Number(slider.value) }).catch(() => {}), 120);
+  });
+  // sürükleme bitince kısa süre sonra poll güncellemesine izin ver
+  slider.addEventListener("change", () => setTimeout(() => { mixerActiveKey = null; }, 500));
+
+  const mute = row.querySelector(".mx-mute");
+  mute.addEventListener("click", () => {
+    const nowMuted = !mute.classList.contains("muted");
+    mute.classList.toggle("muted", nowMuted);
+    api("/mixer", { key: s.key, muted: nowMuted }).catch(() => {});
+  });
+
+  box.appendChild(row);
+  return row;
+}
+
 // --- Pano geçmişi -----------------------------------------------------------
 async function loadClipboard() {
   const box = $("#clipboard");
@@ -420,6 +493,7 @@ function showTab(name) {
   _tabs.forEach((t) => { t.hidden = t.dataset.tab !== name; });
   _tabBtns.forEach((b) => b.classList.toggle("active", b.dataset.go === name));
   try { localStorage.setItem("activeTab", name); } catch { /* yok say */ }
+  if (name === "medya") { loadMixer(); loadAudio(); }   // anında tazele
   window.scrollTo(0, 0);
 }
 _tabBtns.forEach((b) => b.addEventListener("click", () => showTab(b.dataset.go)));
@@ -458,6 +532,7 @@ setInterval(tickClock, 1000);
 setInterval(pixelShift, 60000);   // dakikada bir burn-in kaydırma
 
 loadApps();
+setInterval(loadApps, 15000);       // eklenen/silinen programları otomatik yansıt
 loadGames();
 setInterval(loadGames, 30000);      // yüklenen/silinen oyunları otomatik yansıt
 loadProjects();
@@ -465,6 +540,8 @@ setInterval(loadProjects, 20000);   // yeni/silinen proje klasörlerini otomatik
 syncVolume();
 loadAudio();
 setInterval(loadAudio, 8000);       // ses çıkışı durumu senkron kalsın
+loadMixer();
+setInterval(loadMixer, 4000);       // açılan/kapanan uygulama seslerini yansıt
 loadClipboard();
 setInterval(loadClipboard, 4000);   // pano geçmişi senkron kalsın
 pollStats();

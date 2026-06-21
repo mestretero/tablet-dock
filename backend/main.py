@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 import config
 from services import (appicons, assistant, audio, brain, clipboard, games,
-                      launcher, projects, stt, system)
+                      launcher, mixer, projects, stt, system)
 
 app = FastAPI(title="Tablet Dock Ajanı")
 
@@ -40,6 +40,12 @@ class FolderBody(BaseModel):
 
 class AudioBody(BaseModel):
     key: str
+
+
+class MixerBody(BaseModel):
+    key: str                    # süreç adı (ör. "discord.exe")
+    level: int | None = None    # 0-100 (uygulama sesi)
+    muted: bool | None = None   # sustur / aç
 
 
 class ClipBody(BaseModel):
@@ -183,6 +189,20 @@ def api_volume(body: VolumeBody):
     if body.level is not None:
         return system.set_volume(body.level)
     return system.get_volume()
+
+
+@app.get("/api/mixer")
+def api_mixer():
+    """Uygulama-bazlı ses oturumları (canlı)."""
+    return {"sessions": mixer.list_sessions()}
+
+
+@app.post("/api/mixer")
+def api_mixer_set(body: MixerBody):
+    """Uygulama oturumunun (süreç adı) sesini/sustur durumunu ayarla."""
+    if mixer.set_session(body.key, level=body.level, muted=body.muted):
+        return {"ok": True}
+    raise HTTPException(404, f"ses oturumu bulunamadı: {body.key}")
 
 
 @app.post("/api/chat")

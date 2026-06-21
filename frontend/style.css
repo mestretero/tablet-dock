@@ -208,6 +208,15 @@ html, body {
 .ao-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
 .ao-btn[disabled] { opacity: 0.4; cursor: default; }
 
+/* Uygulama-bazlı ses mikseri */
+.mixer-label { margin-top: 24px; }
+.mixer { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.mx-row { display: flex; align-items: center; gap: 14px; }
+.mx-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.mx-label { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mx-val { font-family: var(--mono); font-size: 1rem; color: var(--muted); min-width: 2.5ch; text-align: right; }
+.mx-empty { color: var(--muted); font-size: 0.92rem; padding: 6px 2px; }
+
 /* --- Asistan (ses arayüzü) --- */
 .assistant {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
